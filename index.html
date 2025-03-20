@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>迷宫射击游戏</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+            color: #fff;
+            font-family: 'Arial', sans-serif;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        #gameContainer {
+            position: relative;
+            margin: 20px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        #gameCanvas {
+            border: 2px solid #333;
+            background-color: #111;
+            border-radius: 8px;
+        }
+        #startScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            backdrop-filter: blur(5px);
+            z-index: 100;
+        }
+        #gameRules {
+            max-width: 600px;
+            margin: 20px;
+            padding: 30px;
+            background: rgba(51, 51, 51, 0.8);
+            border-radius: 15px;
+            line-height: 1.6;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        .rule-section {
+            margin: 15px 0;
+            text-align: left;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            transition: transform 0.3s ease;
+        }
+        .rule-section:hover {
+            transform: translateX(5px);
+        }
+        .rule-title {
+            color: #00ff00;
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+            border-bottom: 2px solid rgba(0, 255, 0, 0.3);
+            padding-bottom: 5px;
+        }
+        .rule-section p {
+            margin: 8px 0;
+            color: #ddd;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+        }
+        #startButton {
+            padding: 15px 40px;
+            font-size: 1.5em;
+            background: linear-gradient(45deg, #00ff00, #00cc00);
+            color: #000;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 2px;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.7);
+            position: relative;
+            z-index: 101;
+            animation: pulse 1.5s infinite alternate;
+        }
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 20px rgba(0, 255, 0, 0.7);
+            }
+            100% {
+                transform: scale(1.05);
+                box-shadow: 0 0 30px rgba(0, 255, 0, 0.9);
+            }
+        }
+        #startButton:active {
+            transform: scale(0.95);
+        }
+        #startButton:disabled {
+            background: linear-gradient(45deg, #666, #444);
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        #score, #lives {
+            position: absolute;
+            top: 20px;
+            color: #fff;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            background: rgba(0, 0, 0, 0.5);
+            padding: 8px 15px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(5px);
+        }
+        #score {
+            left: 20px;
+        }
+        #lives {
+            right: 20px;
+        }
+        h1 {
+            font-size: 3em;
+            margin-bottom: 30px;
+            color: #00ff00;
+            text-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 10px rgba(0, 255, 0, 0.5),
+                            0 0 20px rgba(0, 255, 0, 0.3),
+                            0 0 30px rgba(0, 255, 0, 0.2);
+            }
+            to {
+                text-shadow: 0 0 20px rgba(0, 255, 0, 0.8),
+                            0 0 30px rgba(0, 255, 0, 0.5),
+                            0 0 40px rgba(0, 255, 0, 0.3);
+            }
+        }
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+            animation: fadeIn 0.5s ease-out;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -60%);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%);
+            }
+        }
+        .weapon-indicator {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.5);
+            padding: 8px 15px;
+            border-radius: 20px;
+            color: #fff;
+            font-size: 18px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(5px);
+            display: none;
+        }
+        .weapon-indicator.active {
+            display: block;
+            animation: slideUp 0.3s ease-out;
+        }
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translate(-50%, 20px);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, 0);
+            }
+        }
+        .button-container {
+            margin-top: 30px;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        <div id="startScreen">
+            <h1>坦克大战</h1>
+            <div id="gameRules">
+                <div class="rule-section">
+                    <div class="rule-title">游戏控制</div>
+                    <p>• 使用方向键或WASD控制坦克移动</p>
+                    <p>• 鼠标控制炮管方向</p>
+                    <p>• 点击鼠标左键或空格键发射子弹</p>
+                </div>
+                <div class="rule-section">
+                    <div class="rule-title">游戏规则</div>
+                    <p>• 击中敌人获得10分</p>
+                    <p>• 子弹可以反弹，最多反弹2次</p>
+                    <p>• 被敌人击中或与敌人相撞会损失一条生命</p>
+                    <p>• 初始3条生命，生命值为0时游戏结束</p>
+                </div>
+                <div class="rule-section">
+                    <div class="rule-title">游戏提示</div>
+                    <p>• 注意利用墙体反弹子弹</p>
+                    <p>• 保持移动以避免被敌人击中</p>
+                    <p>• 合理利用空间进行战术躲避</p>
+                    <p>• 收集补给获取武器、生命和护盾</p>
+                </div>
+            </div>
+            <div class="button-container">
+                <button id="startButton">开始游戏</button>
+            </div>
+        </div>
+        <div id="score">分数: 0</div>
+        <div id="lives">生命: 3</div>
+        <div id="weaponIndicator" class="weapon-indicator">当前武器: 普通</div>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html> 
